@@ -1,7 +1,7 @@
 //CREDIT:
 
 //Idea and Concept : 
-//M DAFA JAUHAR HAQ M DAFA JAUHAR HAQ (123250019)
+//M DAFA JAUHAR HAQ M DAFA JAUHAR HAQ (123250018)
 //Developer :
 //VINCENTIUS ARNOLD ADRA (123250022)
 
@@ -350,18 +350,35 @@ void sorting_title(vector<Movie> &mv) {
     }
 }
 
-void sorting_releaseYear(vector<Movie> &mv) {
-    for (int gap = mv.size() / 2; gap > 0; gap /= 2) {
-        for (int i = gap; i < mv.size(); i++) {
-            Movie temp = mv[i];
-            int j;
-            for (j = i; j >= gap && mv[j - gap].releaseYear < temp.releaseYear; j -= gap) {
-                mv[j] = mv[j - gap];
-            }
-            mv[j] = temp;
+int partition(vector<Movie> &mv, int low, int high) {
+    int pivot = mv[high].releaseYear; 
+    int i = (low - 1); 
+
+    for (int j = low; j <= high - 1; j++) {
+        if (mv[j].releaseYear > pivot) { 
+            i++;
+            swap(mv[i], mv[j]);
         }
     }
+    swap(mv[i + 1], mv[high]);
+    return (i + 1);
 }
+
+void quickSort(vector<Movie> &mv, int low, int high) {
+    if (low < high) {
+        int pi = partition(mv, low, high);
+
+        quickSort(mv, low, pi - 1);
+        quickSort(mv, pi + 1, high);
+    }
+}
+
+void sorting_releaseYear(vector<Movie> &mv) {
+    if (mv.empty()) return;
+    
+    quickSort(mv, 0, mv.size() - 1);
+}
+
 // -----------------------------------------------------
 // ==================== MAIN FEATURE ===================
 void view_sales_report(const vector<Movie> &mv) {
@@ -645,6 +662,29 @@ void display_members(const vector<Member> &mb) {
     wait_for_user();
 }
 
+bool only_logout(string name) {
+    string confirm;
+    while (true) {
+        cout << "\nAre you sure want to logout, " << name << "? (Y/N): ";
+        getline(cin, confirm);
+        string res = to_lower(confirm);
+        if (res == "y") {
+            cout << "\nThank you for using Heliopolis Cinema System." << endl;
+            cout << "Goodbye, " << name << "!" << endl;
+            wait_for_user();
+            return true;
+        } else if (res == "n") {
+            cout << "\nLogout cancelled. Returning to dashboard..." << endl;
+            wait_for_user();
+            return false;
+        } else {
+            cout << "\n[!] Invalid input. Please enter 'Y' or 'N' only." << endl;
+            wait_for_user();
+            clear_screen();
+            cout << "=== Logout Confirmation ===" << endl;
+        }
+    }
+}
 bool logout_confirm(string name) {
     string confirm;
     while (true) {
@@ -794,7 +834,8 @@ int main() {
         cout << "5. " << (Urole == "admin" ? "Sell Ticket" : "Buy Ticket") << endl;
         cout << "6. " << (Urole == "admin" ? "Member Menu" : "Member Registration") << endl;
         cout << (Urole == "admin" ? "7. View Sales Report" : "[A] 7. View Sales Report") << endl;
-        cout << "8. Logout & Exit" << endl;
+        cout << "8. Logout" << endl;
+        cout << "9. Logout & Exit" << endl;
         cout << "\nChoose: ";
         getline(cin, choice);
 
@@ -870,6 +911,10 @@ int main() {
                 wait_for_user();
             } 
         } else if (choice == "8") {
+            if (only_logout(Uname)) {
+                landing_page(ac, Uname, Urole);
+			}
+        } else if (choice == "9") {
             if (logout_confirm(Uname)) {
                 break;
             }
