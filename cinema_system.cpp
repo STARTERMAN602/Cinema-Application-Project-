@@ -7,18 +7,16 @@
 
 // ====================== LIBRARY ======================
 #include <iostream>
-#include <string>
 #include <iomanip>
 #include <cctype>
 #include <algorithm>
 #include <limits>
 #include <fstream>
-#include <vector>
 #include <sstream>
 
 using namespace std;
 // -----------------------------------------------------
-// ==================== DATA STRUCT ====================
+// ==================== DATA STRUCT & ARRAY ====================
 struct Movie {
     string title;
     string genre;
@@ -34,12 +32,13 @@ struct Account {
     string role;
 };
 
-struct Member {
-    string memberID;
-    string name;
-    string phone;
-};
-// -----------------------------------------------------
+
+Movie mv[100];
+Account ac[100];
+int mvCount = 0;
+int acCount = 0;
+
+//----------------------------------------------------
 // ======================= UI/UX =======================
 void clear_screen() {
     system("clear || cls");
@@ -58,7 +57,8 @@ string to_lower(string s) {
 bool is_all_alpha(string s) {
     if (s.empty()) return false;
 
-    for (int i = 0; i < s.length(); i++) {
+    int length = s.length();
+    for (int i = 0; i < length; i++) {
         if (!isalpha(s[i]) && !isspace(s[i])) {
             return false;
         }
@@ -69,7 +69,8 @@ bool is_all_alpha(string s) {
 bool is_all_digit(string s) {
     if (s.empty()) return false;
 
-    for (int i = 0; i < s.length(); i++) {
+    int length = s.length();
+    for (int i = 0; i < length; i++) {
         if (!isdigit(s[i])) {
             return false;
         }
@@ -80,7 +81,8 @@ bool is_all_digit(string s) {
 bool is_alphanum_space(string s) {
     if (s.empty()) return false;
 
-    for (int i = 0; i < s.length(); i++) {
+    int length = s.length();
+    for (int i = 0; i < length; i++) {
         if (!isalnum(s[i]) && !isspace(s[i])) {
             return false;
         }
@@ -92,20 +94,28 @@ bool is_no_space_not_empty(string s) {
     if (s.empty()) {
         return false;
     }
-    for (int i = 0; i < s.length(); i++) {
+    int length = s.length();
+    for (int i = 0; i < length; i++) {
         if (isspace(s[i])) {
             return false;
         }
     }
     return true;
 }
-// -----------------------------------------------------
-// =================== SEATS COUNTER ===================
-int count_total_seats(const vector<Movie> &mv, int index) {
-    if (index >= mv.size()) {
+
+float total_revenue(float arr[], int n) {
+    if (n == 0) {
         return 0;
     }
-    return mv[index].stock + count_total_seats(mv, index + 1);
+    return arr[n - 1] + total_revenue(arr, n - 1);
+}
+// -----------------------------------------------------
+// =================== SEATS COUNTER ===================
+int count_total_seats(int index) {
+    if (index >= mvCount) {
+        return 0;
+    }
+    return mv[index].stock + count_total_seats(index + 1);
 }
 // -----------------------------------------------------
 // ================= VALIDATION HELPERS ================
@@ -175,11 +185,11 @@ string get_valid_no_space(string prompt) {
 }
 // -----------------------------------------------------
 // ================== DUPLICATE SEARCH =================
-bool is_duplicate(const vector<Movie> &mv, string title, int year) {
+bool is_duplicate(string title, int year) {
     string lower_target = to_lower(title);
-    for (const auto& m : mv) {
-        if (to_lower(m.title) == lower_target && 
-            m.releaseYear == year) {
+    for (int i = 0; i < mvCount; i++) {
+        if (to_lower(mv[i].title) == lower_target && 
+            mv[i].releaseYear == year) {
             return true;
         }
     }
@@ -187,156 +197,121 @@ bool is_duplicate(const vector<Movie> &mv, string title, int year) {
 }
 // -----------------------------------------------------
 // ================== DATA MANAGEMENT ================== 
-void save_movie(vector<Movie> &mv) {
-    ofstream fout("movies.txt");
-    if (!fout) {
+void save_movie() {
+    ofstream file("movies.txt");
+    if (!file) {
         cout << "Error! Failed to save data." << endl;
         return;
     }
 
-    fout << mv.size() << endl;
-    for (int i = 0; i < mv.size(); i++) {
-        fout << mv[i].title << endl;
-        fout << mv[i].genre << endl;
-        fout << mv[i].duration << endl;
-        fout << mv[i].releaseYear << endl;
-        fout << mv[i].stock << endl;
-        fout << mv[i].price << endl;
+    file << mvCount << endl;
+    for (int i = 0; i < mvCount; i++) {
+        file << mv[i].title << endl;
+        file << mv[i].genre << endl;
+        file << mv[i].duration << endl;
+        file << mv[i].releaseYear << endl;
+        file << mv[i].stock << endl;
+        file << mv[i].price << endl;
     }
-    fout.close();
+    file.close();
     cout << "Data saved successfully." << endl;
 }
 
-void load_movie(vector<Movie> &mv) {
-    ifstream fin("movies.txt");
-    if (!fin) {
+void load_movie() {
+    ifstream file("movies.txt");
+    if (!file) {
         cout << "Movie library is still empty." << endl;
-        mv.clear();
+        mvCount = 0;
         return;
     }
 
     int count;
-    fin >> count;
-    fin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-    mv.clear(); 
-    for (int i = 0; i < count; i++) {
-        Movie temp;
-        getline(fin, temp.title);
-        getline(fin, temp.genre);
-        fin >> temp.duration;
-        fin >> temp.releaseYear;
-        fin >> temp.stock;
-        fin >> temp.price;
-        fin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        mv.push_back(temp);
+    file >> count;
+    if (count > 100){
+		count = 100;
     }
-    fin.close();
-    cout << "Total movie  : " << mv.size() << endl;
+    
+    file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    mvCount = 0; 
+    for (int i = 0; i < count; i++) {
+        getline(file, mv[i].title);
+        getline(file, mv[i].genre);
+        file >> mv[i].duration;
+        file >> mv[i].releaseYear;
+        file >> mv[i].stock;
+        file >> mv[i].price;
+        file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        mvCount++;
+    }
+    file.close();
+    cout << "Total movie  : " << mvCount << endl;
 }
 
-void save_account(vector<Account> &ac) {
-    ofstream fout("users.txt");
-    if (!fout) {
+void save_account() {
+    ofstream file("users.txt");
+    if (!file) {
         cout << "Error! Failed to save data." << endl;
         return;
     }
 
-    fout << ac.size() << endl;
-    for (int i = 0; i < ac.size(); i++) {
-        fout << ac[i].username << endl;
-        fout << ac[i].password << endl;
-        fout << ac[i].role << endl;
+    file << acCount << endl;
+    for (int i = 0; i < acCount; i++) {
+        file << ac[i].username << endl;
+        file << ac[i].password << endl;
+        file << ac[i].role << endl;
     }
-    fout.close();
+    file.close();
     cout << "Data saved successfully." << endl;
 }
 
-void load_account(vector<Account> &ac) {
-    ifstream fin("users.txt");
-    if (!fin) {
+void load_account() {
+    ifstream file("users.txt");
+    if (!file) {
         cout << "No users yet." << endl;
-        ac.clear();
+        acCount = 0;
         return;
     }
 
     int count;
-    fin >> count;
-    fin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-    ac.clear();
+    file >> count;
+    if (count > 100){
+		count = 100;
+    }
+    
+    file.ignore(numeric_limits<streamsize>::max(), '\n'); 
+    acCount = 0;
 
     for (int i = 0; i < count; i++) {
-        Account temp;
-        getline(fin, temp.username);
-        getline(fin, temp.password);
-        getline(fin, temp.role);
+        getline(file, ac[i].username);
+        getline(file, ac[i].password);
+        getline(file, ac[i].role);
 
-        ac.push_back(temp);
+        acCount++;
     }
-    fin.close();
-    cout << "Total account: " << ac.size() << endl;
-}
-
-void save_member(vector<Member> &mb) {
-    ofstream fout("members.txt");
-    if (!fout) {
-        cout << "Error! Failed to save data." << endl;
-        return;
-    }
-
-    fout << mb.size() << endl;
-    for (int i = 0; i < mb.size(); i++) {
-        fout << mb[i].memberID << endl;
-        fout << mb[i].name << endl;
-        fout << mb[i].phone << endl;
-    }
-    fout.close();
-    cout << "Data saved successfully." << endl;
-}
-
-void load_member(vector<Member> &mb) {
-    ifstream fin("members.txt");
-    if (!fin) {
-        cout << "No members yet." << endl;
-        mb.clear();
-        return;
-    }
-
-    int count;
-    fin >> count;
-    fin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-    mb.clear();
-
-    for (int i = 0; i < count; i++) {
-        Member temp;
-        getline(fin, temp.memberID);
-        getline(fin, temp.name);
-        getline(fin, temp.phone);
-
-        mb.push_back(temp);
-    }
-    fin.close();
-    cout << "Total member : " << mb.size() << endl;
+    file.close();
+    cout << "Total account: " << acCount << endl;
 }
  
 void rec_sale(string buyer, string movieTitle, int qty, float total) {
-    ofstream fout("sales_report.txt", ios::app);
+    ofstream file("sales_report.txt", ios::app);
+    if (file.is_open()) {
 
-    if (fout.is_open()) {
-        fout << "Buyer: " << buyer << endl;
-        fout << "Movie: " << movieTitle << endl;
-        fout << "Qty  : " << qty << endl;
-        fout << "Total: Rp" << total << endl;
-        fout << "---------------------------" << endl;
-        fout.close();
+        file << "Buyer: " << buyer << endl;
+        file << "Movie: " << movieTitle << endl;
+        file << "Qty  : " << qty << endl;
+        file << "Total: Rp" << total << endl;
+        file << "---------------------------" << endl;
+
+        file.close();
     }
 }
 // -----------------------------------------------------
 // ============= TITLE & RELEASE YEAR SORT =============
-void sorting_title(vector<Movie> &mv) {
-    for (int gap = mv.size() / 2; gap > 0; gap /= 2) {
-        for (int i = gap; i < mv.size(); i++) {
+void sorting_title() {
+    for (int gap = mvCount / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < mvCount; i++) {
             Movie temp = mv[i];
             string t1 = to_lower(temp.title);
             int j;
@@ -350,7 +325,7 @@ void sorting_title(vector<Movie> &mv) {
     }
 }
 
-int partition(vector<Movie> &mv, int low, int high) {
+int partition(Movie mv[], int low, int high) {
     int pivot = mv[high].releaseYear; 
     int i = (low - 1); 
 
@@ -364,7 +339,7 @@ int partition(vector<Movie> &mv, int low, int high) {
     return (i + 1);
 }
 
-void quickSort(vector<Movie> &mv, int low, int high) {
+void quickSort(Movie mv[], int low, int high) {
     if (low < high) {
         int pi = partition(mv, low, high);
 
@@ -373,113 +348,108 @@ void quickSort(vector<Movie> &mv, int low, int high) {
     }
 }
 
-void sorting_releaseYear(vector<Movie> &mv) {
-    if (mv.empty()) return;
+void sorting_releaseYear() {
+    if (mvCount == 0) return;
     
-    quickSort(mv, 0, mv.size() - 1);
+    quickSort(mv, 0, mvCount - 1);
 }
 
 // -----------------------------------------------------
 // ==================== MAIN FEATURE ===================
-void view_sales_report(const vector<Movie> &mv) {
-    ifstream fin("sales_report.txt");
+
+float get_total_revenue() {
+    ifstream file("sales_report.txt");
+    if (!file) {
+        return 0;
+    }
+    float revenues[1000];
+    int count = 0;
     string line;
+    while (getline(file, line)) {
+
+        if (line.find("Total: Rp") != string::npos) {
+            string angka = line.substr(9);
+            revenues[count] = stof(angka);
+            count++;
+        }
+    }
+
+    file.close();
+    return total_revenue(revenues, count);
+}
+
+void view_sales_report() {
+    ifstream file("sales_report.txt");
+    string line;
+    float revenue = get_total_revenue();
     clear_screen();
-    int totalRemainingSeats = count_total_seats(mv, 0);
+    int totalRemainingSeats = count_total_seats(0);
     cout << "===========================================" << endl;
     cout << "       CINEMA INVENTORY & SALES REPORT     " << endl;
     cout << "===========================================" << endl;
-    cout << "Total Movies in Library    : " << mv.size() << endl;
-    cout << "Total Remaining Seats      : " << totalRemainingSeats << " seats" << endl;
-    cout << "===========================================" << endl << endl;
     
     cout << "--- Transaction History ---" << endl;
-    if (!fin) {
+    if (!file) {
         cout << "No sales yet." << endl;
     } else {
-        while (getline(fin, line)) {
+        while (getline(file, line)) {
             cout << line << endl;
         }
-        fin.close();
+        file.close();
     }
     cout << "\n===========================================" << endl;
+    cout << "Total Movies in Library    : " << mvCount << endl;
+    cout << "Total Remaining Seats      : " << totalRemainingSeats << " seats" << endl;
+    cout << "Total Revenue              : Rp" << revenue << fixed << setprecision(2) << endl;
+    cout << "===========================================" << endl << endl;
     wait_for_user();
 }
 
-void add_movie(vector<Movie> &mv) {
+void add_movie() {
     clear_screen();
     cout << "=== Add New Movies ===" << endl;
 
     int addition = get_valid_int("Number of movies: ");
+    
+    if (mvCount + addition > 100) {
+		cout << "[!] Storage full. Maximum movie capacity is 100." << endl;
+		wait_for_user();
+		return;
+	}
 
     for (int i = 0; i < addition; i++) {
-        Movie temp;
-        cout << "\nData Movie #" << mv.size() + 1 << ":" << endl;
 
-        while(true) {
-            temp.title = get_valid_alphanum_space("=> Title        : ");
-            temp.releaseYear = get_valid_int("=> Release Year : ");
-            if (is_duplicate(mv, temp.title, temp.releaseYear)) {
-                cout << "\n[!] Error: Movie already exists." << endl;
-                cout << "Please input a different movie." << endl;
-            } else {
-                break;
-            }
+    int idx = mvCount;
+
+    cout << "\nData Movie #" << idx + 1 << ":" << endl;
+
+    while(true) {
+        mv[idx].title = get_valid_alphanum_space("=> Title        : ");
+        mv[idx].releaseYear = get_valid_int("=> Release Year : ");
+
+        if (is_duplicate(mv[idx].title, mv[idx].releaseYear)) {
+            cout << "\n[!] Error: Movie already exists." << endl;
+        } else {
+            break;
         }
-        
-        temp.genre = get_valid_alpha("=> Genre        : ");
-        temp.duration = get_valid_int("=> Duration(min): ");
-        temp.stock = get_valid_int("=> Stock (Seats): ");
-        temp.price = get_valid_float("=> Ticket Price : ");
-        mv.push_back(temp);
-        cout << "----------------------------------" << endl;
     }
-    save_movie(mv);
+
+    mv[idx].genre = get_valid_alpha("=> Genre        : ");
+    mv[idx].duration = get_valid_int("=> Duration(min): ");
+    mv[idx].stock = get_valid_int("=> Stock (Seats): ");
+    mv[idx].price = get_valid_float("=> Ticket Price : ");
+
+    mvCount++;
+    cout << "----------------------------------" << endl;
+	}
+	
+    save_movie();
     cout << "\nSuccess! " << addition << " movies added." << endl;
     wait_for_user();
 }
 
-void delete_movie(vector<Movie> &mv) {
-    clear_screen();
-    cout << "=== Delete Movie ===" << endl;
-    if (mv.empty()) {
-        cout << "[!] Movie library is empty. Nothing to delete." << endl;
-        wait_for_user();
-        return;
-    }
-    string targetTitle = get_valid_alphanum_space("Enter Movie Title to delete: ");
-    int targetYear = get_valid_int("Enter Release Year: ");
-
-    bool found = false;
-    for (int i = 0; i < mv.size(); i++) {
-        if (to_lower(mv[i].title) == to_lower(targetTitle) && mv[i].releaseYear == targetYear) {
-            cout << "\nFound: " << mv[i].title << " (" << mv[i].releaseYear << ")" << endl;
-            cout << "Are you sure you want to delete this movie? (Y/N): ";
-            string confirm;
-            getline(cin, confirm);
-
-            if (to_lower(confirm) == "y") {
-                mv.erase(mv.begin() + i);
-                save_movie(mv);
-                cout << "\n[v] Movie deleted successfully." << endl;
-            } else if (to_lower(confirm) == "n") {
-                cout << "\n[!] Deletion cancelled." << endl;
-            } else {
-                cout << "\n[!] Invalid input. Please enter 'Y' or 'N' only." << endl;
-            }
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        cout << "\n[x] Movie not found." << endl;
-     
-    }
-    wait_for_user();
-}
-
-void display_movie(const vector<Movie> &mv) {
-    if (mv.empty()) {
+void display_movie() {
+    if (mvCount == 0){
         cout << "\n[!] Movie library is empty." << endl;
         return;
     }
@@ -488,7 +458,7 @@ void display_movie(const vector<Movie> &mv) {
              << "+" << string(8, '-') << "+" << string(12, '-') << "+" << string(9, '-')
              << "+" << string(14, '-') << "+" << endl; 
     };
-    int totalSeats = count_total_seats(mv, 0);
+    int totalSeats = count_total_seats(0);
     cout << "\n" << string(40, ' ') << "MOVIE LIST" << endl;
     cout << "Total Cinema Capacity (All Movies): " << totalSeats << " seats available." << endl;
     print_line();
@@ -502,7 +472,7 @@ void display_movie(const vector<Movie> &mv) {
          << " | " << setw(12) << "Price" << " |" << endl;
     print_line();
     
-    for (int i = 0; i < mv.size(); i++) {
+    for (int i = 0; i < mvCount; i++) {
         string dur = to_string(mv[i].duration) + "m";
         ostringstream stream;
         stream << "Rp" << fixed << setprecision(2) << mv[i].price;
@@ -519,7 +489,54 @@ void display_movie(const vector<Movie> &mv) {
     print_line();
 }
 
-void search_movie(const vector<Movie> &mv) {
+void delete_movie() {
+    clear_screen();
+    cout << "=== Delete Movie ===" << endl;
+    if (mvCount == 0) {
+        cout << "[!] Movie library is empty. Nothing to delete." << endl;
+        wait_for_user();
+        return;
+    }
+    display_movie();
+    string targetTitle = get_valid_alphanum_space("Enter Movie Title to delete: ");
+
+    bool found = false;
+    for (int i = 0; i < mvCount; i++) {
+        if (to_lower(mv[i].title) == to_lower(targetTitle)) {
+            cout << "\nFound: " << mv[i].title << " (" << mv[i].releaseYear << ")" << endl;
+            while (true) {
+				cout << "Are you sure you want to delete this movie? (Y/N): ";
+
+				string confirm;
+				getline(cin, confirm);
+
+				if (to_lower(confirm) == "y") {
+
+					for (int j = i; j < mvCount - 1; j++) {
+						mv[j] = mv[j + 1];
+					}
+					mvCount--;
+					save_movie();
+					cout << "\n[v] Movie deleted successfully." << endl;
+					break;
+				} else if (to_lower(confirm) == "n") {
+					cout << "\n[!] Deletion cancelled." << endl;
+					break;
+				} else {
+					cout << "\n[!] Invalid input. Please enter 'Y' or 'N' only." << endl;
+				}
+			}
+			found = true;
+		}
+    }
+    if (!found) {
+        cout << "\n[x] Movie not found." << endl;
+     
+    }
+    wait_for_user();
+}
+
+void search_movie() {
     clear_screen();
     cout << "=== Search Movie (Title or Genre) ===" << endl;
     string query = get_valid_alphanum_space("Enter keyword: ");
@@ -535,7 +552,7 @@ void search_movie(const vector<Movie> &mv) {
          << "Price" << endl;
     cout << string(80, '-') << endl;
 
-    for (int i = 0; i < mv.size(); i++) {
+    for (int i = 0; i < mvCount; i++) {
         string l_title = to_lower(mv[i].title);
         string l_genre = to_lower(mv[i].genre);
         if (l_title.find(l_query) != string::npos || l_genre.find(l_query) != string::npos ) {
@@ -556,110 +573,106 @@ void search_movie(const vector<Movie> &mv) {
     wait_for_user();
 }
 
-void transaction(vector<Movie> &mv, vector<Member> &mb, string buyerName, string role) {
+float calculate_discount(float subtotal) {
+    if (subtotal >= 500000) {
+        return subtotal * 0.15f;
+    }
+    if (subtotal >= 250000) {
+        return subtotal * 0.10f;
+    }
+    if (subtotal >= 150000) {
+        return subtotal * 0.05f;
+    }
+    return 0;
+}
+
+void transaction(string buyerName, string role) {
     clear_screen();
-    display_movie(mv);
-    if (mv.empty()) { wait_for_user(); return; }
+    string buyer;
+
+    if (role == "admin") {
+		buyer = get_valid_alpha("Enter Buyer Name: ");
+	} else {
+		buyer = buyerName;
+	}
+
+    if (mvCount == 0) {
+        wait_for_user();
+        return;
+    }
+    
+    display_movie();
+	cout << "\n=== DISCOUNT PROMO ===" << endl;
+	cout << "Total >= Rp150.000 : 5% discount" << endl;
+	cout << "Total >= Rp250.000 : 10% discount" << endl;
+	cout << "Total >= Rp500.000 : 15% discount" << endl;
+	cout << "======================" << endl;
 
     int idx = get_valid_int("\nEnter Movie Number to buy: ") - 1;
 
-    if (idx >= 0 && idx < mv.size()) {
-        int qty = get_valid_int("Quantity: ");
-        if (qty > 0 && qty <= mv[idx].stock) {
-            bool isMember = false;
-            for (int i = 0; i < mb.size(); i++) {
-                if (to_lower(mb[i].name) == to_lower(buyerName)) {
-                    isMember = true;
-                    break;
-                }
-            }
-            float subtotal = qty * mv[idx].price;
-            float discount = 0;
-
-            if (isMember) {
-                discount = subtotal * 0.10;
-            }
-            float total = subtotal - discount;
-            mv[idx].stock -= qty;
-
-            save_movie(mv);
-            rec_sale(buyerName, mv[idx].title, qty, total);
-
-            cout << "\n" << string(30, '=') << endl;
-            cout << "   TRANSACTION SUCCESS" << endl;
-            cout << string(30, '=') << endl;
-            cout << "Movie    : " << mv[idx].title << endl;
-            cout << "Quantity : " << qty << endl;
-            cout << "Subtotal : Rp" << fixed << setprecision(2) << subtotal << endl;
-
-            if (isMember) {
-                cout << "Discount : Rp" << discount << " (Member 10%)" << endl;
-            }
-            cout << "TOTAL    : Rp" << total << endl;
-            cout << string(30, '=') << endl;
-        } else {
-            cout << "\n[!] Not enough stock or invalid quantity." << endl;
-        }
-    } else {
+    if (idx < 0 || idx >= mvCount) {
         cout << "\n[!] Invalid movie number." << endl;
+        wait_for_user();
+        return;
     }
-    wait_for_user();
-}
 
-void add_member(vector<Member> &mb) {
-    clear_screen();
-    cout << "=== Member Registration ===" << endl;
-    Member temp;
-    while(true) {
-        temp.memberID = get_valid_no_space("Enter Member ID (e.g., M001): ");
-        bool idExists = false;
-        for (const auto& m : mb) {
-            if (to_lower(m.memberID) == to_lower(temp.memberID)) {
-                idExists = true;
-                break;
-            }
-        }
-        if (idExists) {
-            cout << "[!] Error: Member ID already exists. Use another ID." << endl;
-        } else {
-            break;
-        }
-    }
-    temp.name = get_valid_alpha("Enter Full Name: ");
-    while (true) {
-        cout << "Enter Phone Number: ";
-        getline(cin, temp.phone);
-        if (is_all_digit(temp.phone) && !temp.phone.empty()) {
-            break;
-        }
-        cout << "[!] Invalid phone number. Digits only!" << endl;
-    }
-    mb.push_back(temp);
-    save_member(mb);
-    cout << "\n[v] Member '" << temp.name << "' registered successfully!" << endl;
-    cout << "Now this user can get a 10% discount on ticket purchase." << endl;
-    wait_for_user();
-}
+    int qty = get_valid_int("Quantity: ");
 
-void display_members(const vector<Member> &mb) {
-    clear_screen();
-    cout << "=== REGISTERED MEMBERS ===" << endl;
-    if (mb.empty()) {
-        cout << "No members registered yet." << endl;
-    } else {
-        cout << string(60, '-') << endl;
-        cout << left << setw(10) << "ID" << setw(30) << "Full Name" << "Phone Number" << endl;
-        cout << string(60, '-') << endl;
-        
-        for (const auto& m : mb) {
-            cout << left << setw(10) << m.memberID
-                 << setw(30) << m.name
-                 << m.phone << endl;
-        }
-        cout << string(60, '-') << endl;
-        cout << "Total Members: " << mb.size() << endl;
+    if (qty <= 0 || qty > mv[idx].stock) {
+        cout << "\n[!] Not enough stock or invalid quantity." << endl;
+        wait_for_user();
+        return;
     }
+
+	float subtotal = qty * mv[idx].price;
+	float discount = calculate_discount(subtotal);
+	float total = subtotal - discount;
+	
+	cout << string(30, '=') << endl;
+	cout << "   TRANSACTION SUMMARY" << endl;
+    cout << string(30, '=') << endl;
+    cout << "Buyer    : " << buyer << endl;
+    cout << "Movie    : " << mv[idx].title << endl;
+    cout << "Quantity : " << qty << endl;
+    cout << "Subtotal : Rp" << fixed << setprecision(2) << subtotal << endl;
+    if (discount > 0) {
+		cout << "Discount : Rp" << fixed << setprecision(2) << discount;
+		if (subtotal >= 500000) {
+			cout << " (15%)";
+		} else if (subtotal >= 250000) {
+			cout << " (10%)";
+		} else if (subtotal >= 150000) {
+			cout << " (5%)";
+		}
+		cout << endl;
+	}
+    cout << "TOTAL    : Rp" << total << endl;
+    cout << string(30, '=') << endl;
+	while (true) {
+		cout << "Are you sure you want to proceed this transaction? (Y/N): ";
+		string confirm;
+		getline(cin, confirm);
+
+		if (to_lower(confirm) == "y") {
+			mv[idx].stock -= qty;
+			save_movie();
+			rec_sale(buyer, mv[idx].title, qty, total);
+
+			cout << "\n" << string(30, '=') << endl;
+			cout << "   TRANSACTION SUCCESS" << endl;
+			cout << string(30, '=') << endl;
+			wait_for_user();
+			break;
+		} else if (to_lower(confirm) == "n") {
+			cout << "\n[!] Transaction cancelled." << endl;
+			wait_for_user();
+			return;
+		} else {
+			cout << "\n[!] Invalid input. Please enter 'Y' or 'N' only." << endl;
+		}
+	}
     wait_for_user();
+	
 }
 
 bool only_logout(string name) {
@@ -710,16 +723,22 @@ bool logout_confirm(string name) {
 }
 // -----------------------------------------------------
 // ==================== LANDING PAGE =================== 
-void signUp(vector<Account> &ac) {
+void signUp() {
     clear_screen();
     cout << "=== Sign Up / Register ===" << endl;
-
+	
+	if (acCount >= 100) {
+		cout << "[!] Account storage is full." << endl;
+		wait_for_user();
+		return;
+	}
+	
     Account newUser;
     string secret;
 
     newUser.username = get_valid_no_space("Create username: ");
 
-    for (int i = 0; i < ac.size(); i++) {
+    for (int i = 0; i < acCount; i++) {
         if (ac[i].username == newUser.username) {
             cout << "\n[Error] Username already taken! Use another name." << endl;
             wait_for_user();
@@ -732,19 +751,21 @@ void signUp(vector<Account> &ac) {
     cout << "Enter Admin Code(Optional): ";
     getline(cin, secret);
 
-    if (secret == "C1N30P0L15") {
+    if (secret == "admin123") {
         newUser.role = "admin";
     } else {
         newUser.role = "guest";
     }
 
-    ac.push_back(newUser);
-    save_account(ac);
+	ac[acCount] = newUser;  
+	acCount++;
+	
+    save_account();
     cout << newUser.role << " Registration Success!" << endl;
     wait_for_user();
 }
 
-bool login(vector<Account> &ac, string &Uname, string &Urole) {
+bool login(string &Uname, string &Urole) {
     string username, password;
     int attempts = 5;
     cout << endl;
@@ -754,7 +775,7 @@ bool login(vector<Account> &ac, string &Uname, string &Urole) {
         username = get_valid_no_space("Username: ");
         password = get_valid_no_space("Password: ");
 
-        for (int i = 0; i < ac.size(); i++) {
+        for (int i = 0; i < acCount; i++) {
             if (ac[i].username == username && ac[i].password == password) {
                 Uname = ac[i].username;
                 Urole = ac[i].role;
@@ -776,7 +797,7 @@ bool login(vector<Account> &ac, string &Uname, string &Urole) {
     return false;
 }
 
-bool landing_page(vector<Account> &ac, string &Uname, string &Urole) {
+bool landing_page(string &Uname, string &Urole) {
     string choice;
     while(true) {
         clear_screen();
@@ -790,11 +811,13 @@ bool landing_page(vector<Account> &ac, string &Uname, string &Urole) {
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         if (choice == "1") {
-            if (login(ac, Uname, Urole)) {
+            if (login(Uname, Urole)) {
                 return true;
-            }
+            } else {
+				return 0;
+			}
         } else if (choice == "2") {
-            signUp(ac);
+            signUp();
         } else if (choice == "3") {
             return false;
         } else {
@@ -807,17 +830,13 @@ bool landing_page(vector<Account> &ac, string &Uname, string &Urole) {
 // -----------------------------------------------------
 // ===================== DASHBOARD =====================
 int main() {
-    vector<Movie> mv;
-    vector<Account> ac;
-    vector<Member> mb;
     
-    load_movie(mv);
-    load_account(ac);
-    load_member(mb);
+    load_movie();
+    load_account();
     
     string Uname, Urole;
 
-    if (!landing_page(ac, Uname, Urole)) {
+    if (!landing_page(Uname, Urole)) {
         return 0;
     }
 
@@ -832,23 +851,22 @@ int main() {
         cout << "3. Display All Movies" << endl;
         cout << "4. Search Movie" << endl;
         cout << "5. " << (Urole == "admin" ? "Sell Ticket" : "Buy Ticket") << endl;
-        cout << "6. " << (Urole == "admin" ? "Member Menu" : "Member Registration") << endl;
-        cout << (Urole == "admin" ? "7. View Sales Report" : "[A] 7. View Sales Report") << endl;
-        cout << "8. Logout" << endl;
-        cout << "9. Logout & Exit" << endl;
+        cout << (Urole == "admin" ? "6. View Sales Report" : "[A] 6. View Sales Report") << endl;
+        cout << "7. Logout" << endl;
+        cout << "8. Logout & Exit" << endl;
         cout << "\nChoose: ";
         getline(cin, choice);
 
         if (choice == "1") {
             if (Urole == "admin") {
-                add_movie(mv);
+                add_movie();
             } else {
                 cout << "\n[!] Access Denied." << endl;
                 wait_for_user();
             } 
         } else if (choice == "2") {
             if (Urole == "admin") {
-                delete_movie(mv);
+                delete_movie();
             } else {
                 cout << "\n[!] Access Denied." << endl;
                 wait_for_user();
@@ -858,16 +876,16 @@ int main() {
             do {
                 clear_screen();
 
-                display_movie(mv);
+                display_movie();
                 cout << "\n[ Sorting Option ]" << endl;
                 cout << "1. Sort by Title (A-Z)" << endl;
                 cout << "2. Sort by Year (Newest to Oldest)" << endl;
                 cout << "0. Back to Main Menu" << endl;
                 s_choice = get_valid_no_space("Choose: ");
                 if (s_choice == "1") {
-                    sorting_title(mv);
+                    sorting_title();
                 } else if (s_choice == "2") {
-                    sorting_releaseYear(mv);
+                    sorting_releaseYear();
                 } else if (s_choice == "0") {
                     break;
                 } else {
@@ -876,45 +894,25 @@ int main() {
                 }
             } while(true);
         } else if (choice == "4") {
-            search_movie(mv);
+            search_movie();
         } else if (choice == "5") {
-            transaction(mv, mb, Uname, Urole);
+            transaction(Uname, Urole);
         } else if (choice == "6") {
-            if (Urole == "admin") {
-                string mb_choice;
-                do {
-                    clear_screen();
-                    cout << "\n[ Member Menu ]" << endl;
-                    cout << "1. Member Registration" << endl;
-                    cout << "2. View All Registered Members" << endl;
-                    cout << "0. Back to Main Menu" << endl;
-                    mb_choice = get_valid_no_space("Choose: ");
-                    if (mb_choice == "1") {
-                        add_member(mb);
-                    } else if (mb_choice == "2") {
-                        display_members(mb);
-                    } else if (mb_choice == "0") {
-                        break;
-                    } else {
-                        cout << "\n[!] Invalid input." << endl;
-                        wait_for_user();
-                    }
-                } while(true);
-            } else {
-                add_member(mb);
-            } 
-        } else if (choice == "7") {
              if (Urole == "admin") {
-                view_sales_report(mv);
+                view_sales_report();
             } else {
                 cout << "\n[!] Access Denied." << endl;
                 wait_for_user();
             } 
-        } else if (choice == "8") {
+        } else if (choice == "7") {
             if (only_logout(Uname)) {
-                landing_page(ac, Uname, Urole);
+                if(!landing_page(Uname, Urole)){
+					break;
+				} else{
+					continue;
+				}
 			}
-        } else if (choice == "9") {
+        } else if (choice == "8") {
             if (logout_confirm(Uname)) {
                 break;
             }
@@ -925,4 +923,3 @@ int main() {
     }
     return 0;
 }
-// -----------------------------------------------------
