@@ -610,16 +610,16 @@ void transaction(string buyerName, string role) {
         wait_for_user();
         return;
     }
-
+	Movie* m = &mv[idx];
     int qty = get_valid_int("Quantity: ");
 
-    if (qty <= 0 || qty > mv[idx].stock) {
+    if (qty <= 0 || qty > m->stock) {
         cout << "\n[!] Not enough stock or invalid quantity." << endl;
         wait_for_user();
         return;
     }
 
-	float subtotal = qty * mv[idx].price;
+	float subtotal = qty * m->price;
 	float discount = calculate_discount(subtotal);
 	float total = subtotal - discount;
 	
@@ -627,7 +627,7 @@ void transaction(string buyerName, string role) {
 	cout << "   TRANSACTION SUMMARY" << endl;
     cout << string(30, '=') << endl;
     cout << "Buyer    : " << buyer << endl;
-    cout << "Movie    : " << mv[idx].title << endl;
+    cout << "Movie    : " << m->title << endl;
     cout << "Quantity : " << qty << endl;
     cout << "Subtotal : Rp" << fixed << setprecision(2) << subtotal << endl;
     if (discount > 0) {
@@ -649,9 +649,9 @@ void transaction(string buyerName, string role) {
 		getline(cin, confirm);
 
 		if (to_lower(confirm) == "y") {
-			mv[idx].stock -= qty;
+			m->stock -= qty;
 			save_movie();
-			rec_sale(buyer, mv[idx].title, qty, total);
+			rec_sale(buyer, m->title, qty, total);
 
 			cout << "\n" << string(30, '=') << endl;
 			cout << "   TRANSACTION SUCCESS" << endl;
@@ -666,8 +666,6 @@ void transaction(string buyerName, string role) {
 			cout << "\n[!] Invalid input. Please enter 'Y' or 'N' only." << endl;
 		}
 	}
-    wait_for_user();
-	
 }
 
 bool only_logout(string name) {
