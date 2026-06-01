@@ -6,13 +6,11 @@
 //VINCENTIUS ARNOLD ADRA (123250022)
 
 // ====================== LIBRARY ======================
-#include <iostream>
-#include <iomanip>
-#include <cctype>
-#include <algorithm>
-#include <limits>
-#include <fstream>
-#include <sstream>
+#include <iostream> 
+#include <iomanip> //untuk UI (setw, fixed, setprecision)
+#include <cctype> //untuk error handling (huruf, angka, simbol, spasi)
+#include <algorithm> //untuk fungsi bantuan (to lower, swap)
+#include <fstream> //untuk implementasi file (ifstream, ofstream)
 
 using namespace std;
 // -----------------------------------------------------
@@ -241,7 +239,7 @@ void load_movie() {
         file >> mv[i].releaseYear;
         file >> mv[i].stock;
         file >> mv[i].price;
-        file.ignore(numeric_limits<streamsize>::max(), '\n');
+        file.ignore(1000 ,'\n');
 
         mvCount++;
     }
@@ -280,7 +278,7 @@ void load_account() {
 		count = 100;
     }
     
-    file.ignore(numeric_limits<streamsize>::max(), '\n'); 
+    file.ignore(1000, '\n'); 
     acCount = 0;
 
     for (int i = 0; i < count; i++) {
@@ -474,9 +472,6 @@ void display_movie() {
     
     for (int i = 0; i < mvCount; i++) {
         string dur = to_string(mv[i].duration) + "m";
-        ostringstream stream;
-        stream << "Rp" << fixed << setprecision(2) << mv[i].price;
-        string prc = stream.str();
 
         cout << "| " << left << setw(2) << i + 1
          << " | " << setw(30) << mv[i].title
@@ -484,7 +479,7 @@ void display_movie() {
          << " | " << setw(6)  << mv[i].releaseYear
          << " | " << setw(10) << dur
          << " | " << setw(7)  << mv[i].stock
-         << " | " << setw(12) << prc << " |" << endl;
+         << " | Rp" << setw(10) << fixed << setprecision(2) <<  mv[i].price << " |" << endl;
     }
     print_line();
 }
@@ -548,7 +543,7 @@ void search_movie() {
     cout << "\nShowing result for: '" << query << "'" << endl;
 
     cout << string(80, '-') << endl;
-    cout << left << setw(30) << "Title" << setw(15) << "Genre" << setw(10) << "Year"
+    cout << left << setw(40) << "Title" << setw(15) << "Genre" << setw(10) << "Year"
          << "Price" << endl;
     cout << string(80, '-') << endl;
 
@@ -556,7 +551,7 @@ void search_movie() {
         string l_title = to_lower(mv[i].title);
         string l_genre = to_lower(mv[i].genre);
         if (l_title.find(l_query) != string::npos || l_genre.find(l_query) != string::npos ) {
-            cout << left << setw(30) << mv[i].title
+            cout << left << setw(40) << mv[i].title
                  << setw(15) << mv[i].genre
                  << setw(10) << mv[i].releaseYear
                  << "Rp" << (int)mv[i].price << endl;
@@ -808,7 +803,7 @@ bool landing_page(string &Uname, string &Urole) {
         cout << "3. Exit Application" << endl;
         cout << "\nChoose: ";
         cin >> choice;
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        cin.ignore(1000, '\n');
 
         if (choice == "1") {
             if (login(Uname, Urole)) {
@@ -819,6 +814,7 @@ bool landing_page(string &Uname, string &Urole) {
         } else if (choice == "2") {
             signUp();
         } else if (choice == "3") {
+			cout << "\n=== Exiting...";
             return false;
         } else {
             cout << "\n[Error] Invalid input. Please enter 1, 2, or 3." << endl;
